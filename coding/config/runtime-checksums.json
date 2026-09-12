@@ -1,0 +1,8 @@
+{
+  "$comment": "钉死的第三方运行时校验值。key = <平台目标>/<版本>，value = 下载产物解出来的可执行文件 sha256。prepare-cloudflared.mjs 只在「文件由我们自己下载」这条路上强制比对；表里没有的目标只做记录与提示（cloudflared 的 GitHub release 不提供官方校验文件，2025.4.2 实测 26 个产物里没有 .sha256/SHA256SUMS），此时改用平台签名（macOS codesign / Windows Authenticode）判真伪。改版本要重新取值，不要放开校验。",
+  "cloudflared-darwin-arm64/2025.4.2": "b55af1b8c5b5dd80ca29cb5eb3cfd3875eb85510c74f630852ffbc4aea1b8a8b",
+  "cloudflared-darwin-amd64/2025.4.2": null,
+  "cloudflared-linux-arm64/2025.4.2": null,
+  "cloudflared-linux-amd64/2025.4.2": null,
+  "cloudflared-windows-amd64/2025.4.2": null
+}

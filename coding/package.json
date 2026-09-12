@@ -1,0 +1,53 @@
+{
+  "name": "ai-window-coding",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": "24.18.1"
+  },
+  "scripts": {
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:a": "npm run dev -w apps/a-frontend",
+    "dev:b": "npm run dev -w apps/b-frontend",
+    "dev": "concurrently -n server,a,b -c blue,green,magenta \"npm:dev:server\" \"npm:dev:a\" \"npm:dev:b\"",
+    "build:server": "tsc -p tsconfig.json",
+    "build": "npm run build:server && npm run build -w apps/a-frontend && npm run build -w apps/b-frontend",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "prepare-cloudflared": "node scripts/prepare-cloudflared.mjs",
+    "dev:tunnel": "npm run prepare-cloudflared && npm run dev:server",
+    "check": "npm run typecheck && npm run test && npm run e2e && npm run e2e:startup && npm run build",
+    "e2e": "node scripts/e2e.mjs",
+    "e2e:tunnel": "node scripts/e2e-tunnel.mjs",
+    "e2e:startup": "node scripts/e2e-startup.mjs",
+    "db:reset": "rm -f data/dev.sqlite data/dev.sqlite-shm data/dev.sqlite-wal",
+    "smoke:model": "node scripts/smoke-model.mjs",
+    "check:skin": "node scripts/check-a-skin.mjs",
+    "check:layout": "node scripts/audit-a-layout.mjs"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "better-sqlite3": "13.0.3",
+    "dotenv": "17.4.2",
+    "hono": "4.13.7",
+    "zod": "4.6.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "22.20.2",
+    "concurrently": "10.0.5",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "5.0.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "esbuild@0.28.2": true,
+    "fsevents@2.3.3": true
+  }
+}

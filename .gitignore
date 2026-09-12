@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.vite/
+.vitest/
+# 会话数据与 SQLite（会话关闭即删除，不得进 Git）
+data/*.json
+data/*.sqlite
+data/*.sqlite-*
+# coding/ 下也有一份运行期 SQLite（vitest 与 dev server 都会写）
+coding/data/*.sqlite
+coding/data/*.sqlite-*
+# 下载的运行时与隧道二进制
+.runtime/*
+logs/*
+# 自动下载的 cloudflared 与它的安装回执：二进制不入库，回执是本机生成的
+coding/bin/
+*.log
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store

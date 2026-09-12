@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI 味增强器"
+  short_description: "把文字改得更像 AI 生成"
+  default_prompt: "Use $ai-style-amplifier 把下面的文字改得更像 AI 生成，默认使用明显强度，保留原意、事实和数字，不新增来源或数据。"

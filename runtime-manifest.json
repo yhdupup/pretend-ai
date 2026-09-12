@@ -1,0 +1,53 @@
+{
+  "$comment": "项目专用运行时清单（PRD §12.2）。版本与 SHA-256 一律钉死：脚本只认这里列出的字节。镜像只能换主机（AIWINDOW_NODE_BASE / AIWINDOW_TUNNEL_BASE），不能换校验值，也没有「跳过校验」开关。null 表示该平台还没有把关值，脚本会拒绝下载。生成方式：node coding/scripts/gen-runtime-manifest.mjs（Node 的值来自 nodejs.org 官方 SHASUMS256.txt；cloudflared 官方不发校验文件，值是首次下载后人工核对钉下来的，运行时另加平台签名校验）。",
+  "generatedBy": "coding/scripts/gen-runtime-manifest.mjs",
+  "generatedAt": "2026-09-11T08:44:13.891Z",
+  "node": {
+    "version": "v24.18.1",
+    "checksumHost": "https://nodejs.org/dist",
+    "mirrorBase": "https://nodejs.org/dist",
+    "targets": {
+      "darwin-arm64": {
+        "artifact": "node-v24.18.1-darwin-arm64.tar.gz",
+        "sha256": "eb02f7fab96d3d67de40c5ec8566096fcb4c2026728787683ae5a97eb612b941"
+      },
+      "darwin-x64": {
+        "artifact": "node-v24.18.1-darwin-x64.tar.gz",
+        "sha256": "6fb20fceacbb157c2f95825b80df4a454a0f6d81cdcd7bb81eeae9147e0e76ec"
+      },
+      "win-x64": {
+        "artifact": "node-v24.18.1-win-x64.zip",
+        "sha256": "ec56b84a7551893ab2324ebdfdc4ab974a63b4781162600b68a1293cc3e53765"
+      }
+    }
+  },
+  "cloudflared": {
+    "version": "2025.4.2",
+    "releaseUrl": "https://github.com/cloudflare/cloudflared/releases/download",
+    "provenance": "GitHub release 无官方校验文件；sha256 为首次下载取值钉死，运行时另做 macOS codesign(TeamID 68WVV388M8) / Windows Authenticode(Cloudflare) 校验",
+    "targets": {
+      "darwin-arm64": {
+        "artifact": "cloudflared-darwin-arm64.tgz",
+        "binName": "cloudflared",
+        "package": "cloudflared-darwin-arm64.tgz",
+        "sha256": "b55af1b8c5b5dd80ca29cb5eb3cfd3875eb85510c74f630852ffbc4aea1b8a8b"
+      },
+      "darwin-x64": {
+        "artifact": "cloudflared-darwin-amd64.tgz",
+        "binName": "cloudflared",
+        "package": "cloudflared-darwin-amd64.tgz",
+        "sha256": null
+      },
+      "win-x64": {
+        "artifact": "cloudflared-windows-amd64.exe",
+        "binName": "cloudflared.exe",
+        "package": "cloudflared-windows-amd64.tgz",
+        "sha256": null
+      }
+    }
+  },
+  "paths": {
+    "runtimeDir": ".runtime",
+    "nodeDir": ".runtime/node"
+  }
+}

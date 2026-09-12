@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>阶段五自检台 · 假装 AI</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --ok: #1a7f37;
+        --bad: #c0392b;
+        --warn: #b8860b;
+        --line: #d8dee4;
+        --muted: #6a737d;
+        --bg: #f6f8fa;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font:
+          14px/1.65 -apple-system,
+          "PingFang SC",
+          "Microsoft YaHei",
+          system-ui,
+          sans-serif;
+        margin: 0 auto;
+        padding: 28px 20px 80px;
+        max-width: 1020px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 26px 0 10px;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 18px;
+      }
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .card {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        min-width: 170px;
+      }
+      .card b {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 7px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .pass {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .skip {
+        color: var(--warn);
+        font-weight: 600;
+      }
+      .fail {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .id {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      button {
+        font: inherit;
+        padding: 7px 14px;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #1f6feb;
+        border-color: #1f6feb;
+        color: #fff;
+      }
+      button.danger {
+        border-color: #c0392b;
+        color: #c0392b;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 150px;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      ul.checks {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      ul.checks li {
+        border-bottom: 1px dashed var(--line);
+        padding: 9px 0;
+      }
+      ul.checks label {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      ul.checks input {
+        margin-top: 4px;
+      }
+      ul.checks small {
+        display: block;
+        color: var(--muted);
+      }
+      select {
+        font: inherit;
+        padding: 3px 6px;
+      }
+      code {
+        background: var(--bg);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .banner {
+        border: 1px solid var(--warn);
+        background: #fff8e1;
+        color: #6b5200;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>阶段五自检台 · 启动脚本与本机入口</h1>
+    <p class="sub">
+      这一页只做两件事：把「这台机器现在到底准备好了没有」摊开给你看，以及把你双击验收时看到的每一格记下来。
+      它不改动任何业务数据，也不替代自动化测试。
+    </p>
+    <div id="auth" class="banner" hidden>
+      还没建立本机控制会话，本页拿不到 <code>/api/local/*</code> 的数据。
+      请用启动脚本自动打开的那次导航（<code>/api/local/bootstrap/&lt;一次性令牌&gt;</code>）在同一个浏览器里走一遍，再刷新本页。
+    </div>
+
+    <h2>1. 当前运行环境</h2>
+    <div class="cards" id="env">
+      <div class="card"><b>状态</b><span>加载中…</span></div>
+    </div>
+
+    <h2>2. 自动化检查</h2>
+    <div class="row">
+      <button class="primary" id="runAll">运行全部检查</button>
+      <button id="reload">重新读取环境</button>
+      <span class="hint" id="summary">尚未运行</span>
+    </div>
+    <table id="results">
+      <thead>
+        <tr>
+          <th style="width: 64px">结果</th>
+          <th style="width: 250px">检查项</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="3" class="hint">还没跑</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. 手工双击验收清单</h2>
+    <p class="hint">
+      这些是只能靠眼睛看的项：终端第一行字、Gatekeeper、拔网线、进程数、关窗口的行为。
+      勾选结果留在本机浏览器里，可导出 markdown。
+    </p>
+    <ul class="checks" id="manual"></ul>
+    <div class="row" style="margin-top: 12px">
+      <button id="export">导出验收报告</button>
+      <button id="resetManual">清空勾选</button>
+      <span class="hint" id="exportHint"></span>
+    </div>
+    <textarea id="report" hidden></textarea>
+
+    <h2>4. 动作区</h2>
+    <div class="row">
+      <a href="/"><button>打开 A 工作台</button></a>
+      <button id="reconnect">重连公网通道</button>
+      <button class="danger" id="shutdown">停止本机服务</button>
+    </div>
+    <p class="hint">
+      「重连公网通道」只在 cloudflared 模式下有效；断网恢复后点它（阶段三
+      §5.5）。
+      「停止本机服务」等价于关掉启动时那个终端窗口：结束所有工作会话、收掉通道、原公网链接失效，
+      下一次启动不会恢复旧链接（PRD §4）。
+    </p>
+    <script>
+      // 手工清单：逐条对应 docs/阶段五开发文档-启动脚本.md §六 的「档 3 真机手工清单」15 条。
+      // 这一节必须是真人/真机才能验的 —— 能自动验的都放进下面的 CHECKS，
+      // 不要在这里放「其实跑个 fetch 就能知道」的条目，那只会让人去怀疑一个不存在的问题。
+      var MANUAL_ITEMS = [
+        {
+          id: "clean-first-run",
+          text: "1 干净 macOS 用户账户（系统里没装 Node）双击一次，全自动跑到工作台",
+          how: "档3 第 1 条。第一次会被 Gatekeeper 拦：右键 → 打开。手机热点打开 B 链接能建会话才算完整通过",
+        },
+        {
+          id: "intel",
+          text: "2 Intel Mac（darwin-x64）首次下载并校验通过",
+          how: "档3 第 2 条。清单里那个哈希至今没被真实下载验证过，是纸面值",
+        },
+        {
+          id: "windows",
+          text: "3 Windows 11 从 .bat 跑到工作台",
+          how: "档3 第 3 条。PowerShell 引导层 + Authenticode 校验，本机环境一行都没跑过，风险最高",
+        },
+        {
+          id: "offline-download",
+          text: "4 下载不通时（断网/镜像挂了）报中文文案、不留半文件",
+          how: "档3 第 4 条。已在本机用不存在的镜像构造验过；真拔网线还没做",
+        },
+        {
+          id: "tamper",
+          text: "5 校验值对不上时：删掉、拒绝、绝不执行",
+          how: "档3 第 5 条。把 runtime-manifest.json 里本机那行 sha256 改一个字符再启动",
+        },
+        {
+          id: "warm-20s",
+          text: "6 一切就绪后，从双击到工作台 ≤20 秒",
+          how: "档3 第 6 条。本机就绪态实测 1.17 秒",
+        },
+        {
+          id: "port-taken",
+          text: "7 8787 被别的程序占用时：报进程名、不替我 kill",
+          how: "档3 第 7 条。本机实测文案「端口被「node」（进程号 …）占着」，且那个陌生进程还活着",
+        },
+        {
+          id: "already-running",
+          text: "8 已经在跑时再双击：不重复起，直接开现有工作台",
+          how: "档3 第 8 条。退出码 5，窗口里说「已经在跑了」",
+        },
+        {
+          id: "stop-clean",
+          text: "9 停止脚本：两个端口释放、无 cloudflared 孤儿、会话清空",
+          how: "档3 第 9 条。跑 stop-macos.command，再回到这一页点「跑一遍自动检查」，pid/lock 那格应显示「没有」",
+        },
+        {
+          id: "window-close",
+          text: "10 直接关掉启动窗口：等同停止，下次启动自动清场、旧 B 链接失效",
+          how: "档3 第 10 条。旧链接再打开应该是「会话不存在」，不是还在聊",
+        },
+        {
+          id: "lock-change",
+          text: "11 改 package-lock.json 一行后启动：重装依赖；只改 npm scripts 不该重装",
+          how: "档3 第 11 条。只改 scripts 就重装是本轮修掉的缺陷",
+        },
+        {
+          id: "wipe-runtime",
+          text: "12 删掉 .runtime 整个目录后启动：完全重来一遍且成功",
+          how: "档3 第 12 条。首次下载约 1 分钟（本机实测 71 秒），中途有进度行",
+        },
+        {
+          id: "log-safe",
+          text: "13 日志里没有草稿、提示词、密钥、令牌",
+          how: "档3 第 13 条。跑一轮对话后回这一页点自动检查，「日志」那格两个命中数都应是 0",
+        },
+        {
+          id: "tunnel-mirror",
+          text: "14 国内网络设 AIWINDOW_TUNNEL_BASE 换镜像：校验值仍是官方那个",
+          how: "档3 第 14 条。开关本轮才真正接上；真国内网络还没验。注意镜像只换下载主机名，校验不会放宽",
+        },
+        {
+          id: "stranger",
+          text: "15 没参与过的人，只看窗口提示 + docs/启动失败手动处理.md，10 分钟内拿到 B 链接",
+          how: "档3 第 15 条 = PRD §26 的本阶段近似版。旁边人不要解释，只记时间和卡点",
+        },
+        {
+          id: "terms",
+          text: "补：首次下载 cloudflared 之前有中文第三方条款确认，输入 yes 才继续",
+          how: "删掉 coding/bin 下的二进制与回执后启动：应打印条款并要求输入；输入非 yes 会中止且给出局域网出路（§10.3）",
+        },
+        {
+          id: "user-config",
+          text: "补：不读写用户自己的 ~/.cloudflared",
+          how: "有该目录的机器上启动：只提示「检测到你自己的配置目录，不会读它」，目录内容时间戳不变",
+        },
+        {
+          id: "first-progress",
+          text: "补：双击后 3 秒内窗口里出现中文进度，且全程没有 stack trace",
+          how: "第一行是「检查系统 / 目标平台 …」这种人话；红字失败时也应是一句中文加退出码",
+        },
+        {
+          id: "offline-a",
+          text: "补：断网时 A 本机仍然可用",
+          how: "拔网线后启动：工作台照常，只是拿不到公网链接（隧道失败不许拖垮本机入口）",
+        },
+        {
+          id: "offline-b",
+          text: "补：运行中断网 ≥16 秒，B 显示「通道异常」、A 出现掉线横幅",
+          how: "起来之后拔网线等 16 秒再插回：B 不该一直转圈，A 该提示重连结果（阶段三 §5.5）",
+        },
+        {
+          id: "cross-device",
+          text: "补：不同电脑、不同 WiFi 的手机能打开 B 链接（本次需求的主场景）",
+          how: "本机没法替自己证明这件事：只有从另一张网上打开才知道。手机关掉 Wi-Fi 用流量，点 A 工作台上那条公网链接，"
+            + "应当看到 B 的聊天窗口。若 A 界面写「本机没验证通过」，这一步就是唯一的定论手段；"
+            + "自己手机能开、对面不能开，则是临时域名被运营商/公司网拦了，不是本机问题",
+        },
+        {
+          id: "link-trail",
+          text: "补：手机点开之后，项目 logs/ 最新那个 .log 里应多出一行 link opened",
+          how: "这一行与建窗口时的 link created 靠同一个 linkRef （会话代号前 8 位）对上，"
+            + "就是「A 发了、B 确实点到了」的全部凭据。只有 created 没有 opened → 链接没递到对方手里；"
+            + "linkSource=local-dev → 你发的是本机地址，别人必然打不开。日志里不会出现完整链接、域名、令牌，发给人帮查时不用遮",
+        },
+      ];
+
+      // 自动化检查。两条硬规矩，都是这一轮真机测出来的：
+      // ① 只写浏览器真能做到的事 —— 跨端口读 B 会被同源策略挡掉，那种检查永远红，
+      //    要探 B 必须由 A 的服务端代探（见 /api/local/selftest/env 的 publicProbe）；
+      // ② 判「活着」不能只看 200 —— 必须让服务端原样回显我们塞进去的随机串。
+      // cookie: true 表示要控制会话；未登录时判「跳过」而不是「失败」——
+      // 把「你还没解锁」显示成红叉，是这一页最糟糕的误导。
+      var CHECKS = [
+        {
+          id: "health-a",
+          name: "A 入口存活探针：随机串必须原样回显",
+          run: async function () {
+            var probe = "web" + Math.random().toString(36).slice(2, 10);
+            var r = await fetch("/api/local/health?probe=" + probe);
+            var j = await r.json();
+            if (r.status !== 200 || j.ok !== true || j.service !== "a")
+              throw new Error("HTTP " + r.status + " body=" + JSON.stringify(j));
+            if (j.probe !== probe)
+              throw new Error("探针没回显（拿到的是缓存或别人的 200）：" + JSON.stringify(j));
+            var keys = Object.keys(j).sort().join(",");
+            if (keys !== "ok,probe,service")
+              throw new Error("字段超出约定：" + keys);
+            return "回显 " + probe + "，字段恰好 " + keys;
+          },
+        },
+        {
+          id: "health-no-cookie",
+          name: "探针不需要 Cookie（启动脚本没有浏览器会话）",
+          run: async function () {
+            var r = await fetch("/api/local/health", { credentials: "omit" });
+            if (r.status !== 200) throw new Error("被鉴权挡住：HTTP " + r.status);
+            return "无 Cookie 仍 200";
+          },
+        },
+        {
+          id: "same-origin-get",
+          name: "同源 GET 不带 Origin 也能读数据（真实浏览器判据）",
+          cookie: true,
+          help: "浏览器对同源 GET 不发 Origin 头，只发 Sec-Fetch-Site。这一条专门盯「鉴权把同源请求当跨站拒掉」——\n那一版缺陷的表现是：页面能打开，但每个数据接口 403，界面永远显示「读不到通道状态」。\ncurl 和单测都会手写一个 Origin 头，所以只有真浏览器能抓到。",
+          run: async function () {
+            var r = await fetch("/api/local/status");
+            if (r.status === 403)
+              throw new Error(
+                "403：同源 GET 被鉴权拒了（查 local-auth 对「无 Origin + Sec-Fetch-Site: same-origin」的判定）",
+              );
+            if (r.status !== 200)
+              throw new Error("HTTP " + r.status + "（未解锁的话先按上面的引导链接走一遍）");
+            return "200，会话可读";
+          },
+        },
+        {
+          id: "index",
+          name: "A 工作台由本机入口自己发（不再依赖 Vite）",
+          run: async function () {
+            var r = await fetch("/");
+            var t = await r.text();
+            if (r.status === 503)
+              throw new Error("页面未构建：跑一次启动脚本，或 npm run build -w apps/a-frontend");
+            if (r.status !== 200) throw new Error("HTTP " + r.status);
+            if (t.indexOf("root") < 0) throw new Error("返回的不是工作台 index.html");
+            return "200，" + t.length + " 字节";
+          },
+        },
+        {
+          id: "index-nostore",
+          name: "index.html 不缓存（换构建不会白屏）",
+          run: async function () {
+            var r = await fetch("/");
+            var cc = r.headers.get("cache-control") || "";
+            if (cc.indexOf("no-store") < 0)
+              throw new Error("Cache-Control: " + (cc || "（空）"));
+            return "Cache-Control: " + cc;
+          },
+        },
+        {
+          id: "asset",
+          name: "构建产物能加载且长缓存",
+          run: async function () {
+            var html = await (await fetch("/")).text();
+            var m = html.match(/\/assets\/[\w.-]+\.(?:js|css)/);
+            if (!m) throw new Error("index.html 里找不到 /assets/ 引用");
+            var r = await fetch(m[0]);
+            if (r.status !== 200) throw new Error(m[0] + " → HTTP " + r.status);
+            var cc = r.headers.get("cache-control") || "";
+            if (cc.indexOf("immutable") < 0) throw new Error("Cache-Control: " + cc);
+            return m[0] + " 200，" + cc;
+          },
+        },
+        {
+          id: "traversal",
+          name: "/assets/ 不接受路径穿越",
+          run: async function () {
+            var tries = [
+              "/assets/../../package.json",
+              "/assets/%2e%2e%2f%2e%2e%2f.env.local",
+              "/assets/..%2fconfig/skills.json",
+            ];
+            for (var i = 0; i < tries.length; i++) {
+              var r = await fetch(tries[i]);
+              if (r.status === 200) throw new Error(tries[i] + " 竟然给了 200");
+            }
+            return "三种写法都不是 200";
+          },
+        },
+        {
+          id: "cookie-required",
+          name: "会话数据接口仍然要本机控制会话",
+          run: async function () {
+            var r = await fetch("/api/local/settings/assist", {
+              credentials: "omit",
+            });
+            if (r.status !== 403)
+              throw new Error("免 Cookie 竟然通过：HTTP " + r.status);
+            return "无 Cookie → 403（页面壳免 Cookie，数据不免）";
+          },
+        },
+        {
+          id: "unknown-path",
+          name: "未知路径不给页面（403 或 404，绝不给目录清单）",
+          help: "未登录时鉴权中间件先拦，所以是 403；登录后才走到路由的 404。两种都对。\n以前这里写死只认 404，于是「没登录」被误报成失败——红叉来自检查本身，不是产品。",
+          run: async function () {
+            var r = await fetch("/definitely-not-a-page-" + Date.now());
+            if (r.status !== 404 && r.status !== 403)
+              throw new Error("HTTP " + r.status);
+            var t = await r.text();
+            if (t.indexOf("Directory listing") >= 0 || t.indexOf("<ul><li>") >= 0)
+              throw new Error("响应里疑似目录清单");
+            return "HTTP " + r.status + "（未登录 403 / 已登录 404 都算通过）";
+          },
+        },
+        {
+          id: "env",
+          name: "自检数据接口可用（本页数据来源）",
+          cookie: true,
+          run: async function () {
+            var j = await envJson();
+            return (
+              "node " + j.runtime.nodeVersion +
+              (j.runtime.usingProjectRuntime ? "（项目专用）" : "（系统 Node）") +
+              "，令牌来源 " +
+              (j.runtime.launcherSuppliedToken ? "启动器注入" : "进程内随机")
+            );
+          },
+        },
+        {
+          id: "skills",
+          name: "两个 Skill 装载状态可读",
+          cookie: true,
+          run: async function () {
+            var j = await envJson();
+            var bad = [];
+            if (!j.skills.aiStyle.usable)
+              bad.push(
+                "增加ai味 " +
+                  j.skills.aiStyle.status +
+                  (j.skills.aiStyle.reason ? "（" + j.skills.aiStyle.reason + "）" : ""),
+              );
+            if (!j.skills.analysis.usable)
+              bad.push(
+                "深度思考反推 " +
+                  j.skills.analysis.status +
+                  (j.skills.analysis.reason ? "（" + j.skills.analysis.reason + "）" : ""),
+              );
+            if (j.skills.configError)
+              bad.push("config/skills.json " + j.skills.configError);
+            if (bad.length) throw new Error(bad.join("；"));
+            return j.skills.aiStyle.skillId + " / " + j.skills.analysis.skillId;
+          },
+        },
+        {
+          id: "b-probe",
+          name: "B 入口存活（由 A 的服务端本机代探）",
+          help: "浏览器在 A 的页面里读不到 8788：不同端口就是不同源，而 B 面向公网、故意不发 CORS 头。\n所以这一条必须服务端探；拿 fetch 的失败当「B 挂了」是误判。",
+          cookie: true,
+          run: async function () {
+            var j = await envJson();
+            var p = j.publicProbe || {};
+            if (!p.reachable)
+              throw new Error(
+                p.error
+                  ? "本机探 " + p.port + " 失败：" + p.error + "（B 入口没起来，或端口不对）"
+                  : "HTTP " + p.status + "，service=" + p.service,
+              );
+            if (!p.probeEchoed)
+              throw new Error("回了 200 但没回显随机串 —— 别把它当成我们在跑的那个 B");
+            return "127.0.0.1:" + p.port + " 回显正确，" + p.latencyMs + "ms";
+          },
+        },
+        {
+          id: "b-no-local-route",
+          name: "公网入口打不到 A 的控制接口",
+          help: "阶段五验收标准第 14 项的正向证据：B 端口上不存在任何 /api/local/*。\n必须在服务端探：本页 CSP 是 connect-src 'self'，浏览器不允许它去连 8788（这正是该有的隔离）。",
+          cookie: true,
+          run: async function () {
+            var j = await envJson();
+            var p = j.publicProbe || {};
+            if (!p.reachable) throw new Error("B 入口不通，无从判断");
+            if (p.localRouteStatus === null)
+              throw new Error("探测没做成（B 端口连不上）");
+            if (p.localRouteStatus === 200)
+              throw new Error("B 端口能读到 A 的控制接口（应 404）");
+            return "B 上的 /api/local/health → HTTP " + p.localRouteStatus;
+          },
+        },
+        {
+          id: "tunnel-budget",
+          name: "公网通道：状态诚实，且不会无限重连",
+          help: "这一条盯两件事：① 失败会不会自己收手（不再无限重连、无限换域名）；\n② 本机解析不通自己隧道域名时（代理/DNS 分流很常见），地址还要能交给 A 自己点开——\n    以前两档都不给，A 只能看到一个只在本机能点的 127.0.0.1，什么也发不出去。\n地址本身到底能不能从别的网打开，本机说了不算，见下面清单里的「不同 WiFi」那一条。",
+          cookie: true,
+          run: async function () {
+            var j = await envJson();
+            var t = (await (await fetch("/api/local/status")).json()).tunnel || {};
+            var bits = [];
+            bits.push("状态 " + t.status);
+            if (t.publicBaseUrl) bits.push(t.reachable ? "已验证可达" : "本机验证不通");
+            // 本轮修的坑：本机验不通时，地址以前根本不交出去，A 只能看到一个 127.0.0.1。
+            // 现在它在 pendingBaseUrl 里：屏幕上看得到、但复制按钮仍关着。
+            if (!t.publicBaseUrl && t.pendingBaseUrl)
+              bits.push("地址已给出、本机未验证（可自己点开，不可复制）");
+            if (t.publicBaseUrl && t.pendingBaseUrl)
+              throw new Error("两档地址同时给了，界面会说两套话：" + t.publicUrlSource);
+            if (t.urlCycles) bits.push("抖动 " + t.urlCycles + " 轮");
+            if (t.reconnects) bits.push("重连 " + t.reconnects + " 次");
+            if (t.lastClientExit && !t.lastClientExit.sawUrl)
+              bits.push("上次：没等到地址就退了(code=" + t.lastClientExit.code + ")");
+            // 抖动已经很多轮却还没进终态 = 收手逻辑又失效了
+            if (t.status !== "UNAVAILABLE" && t.urlCycles >= 6)
+              throw new Error("抖了 " + t.urlCycles + " 轮还不收手：" + bits.join("，"));
+            if (t.status === "UNAVAILABLE" && !t.error)
+              throw new Error("进了终态却没给 A 任何解释");
+            if (t.status === "UNAVAILABLE") return bits.join("，") + " —— 已按预期收手：" + t.error;
+            return bits.join("，");
+          },
+        },
+        {
+          id: "launcher-state",
+          name: "启动层自洽：pid 指的就是我、锁在、stamp 与本机匹配",
+          cookie: true,
+          help: "pid 与「我」对不上有两种可能：那个进程还活着 → 起了两份；已经没了 → 上次没清干净。\n两种都值得知道，所以这里分开报，不合并成一句「异常」。",
+          run: async function () {
+            var L = (await envJson()).launcher || {};
+            var bad = [];
+            if (!L.pidFile || !L.pidFile.exists)
+              bad.push("没有 server.pid（不是启动脚本拉起来的？npm run dev 时这条本就不适用）");
+            else if (!L.pidFile.pointsAtThisProcess)
+              bad.push(
+                "server.pid 里是 " + L.pidFile.pid + "，不是我（" +
+                  (L.pidFile.processAlive
+                    ? "那进程还活着 → 可能起了两份"
+                    : "那进程已不存在 → 上次没清干净") +
+                  "）",
+              );
+            if (L.pidFile && L.pidFile.portsMatch === false)
+              bad.push("server.pid 里记的端口与当前配置不一致（残留或改过端口）");
+            if (!L.lockFileExists && L.launcherSuppliedToken)
+              bad.push("start.lock 不见了");
+            if (L.stamps && L.stamps.deps && !L.stamps.deps.matchesThisMachine)
+              bad.push(
+                "依赖 stamp 记的是 " + L.stamps.deps.nodeVersion + "/" +
+                  L.stamps.deps.platform + "，与本机不符 → 下次启动会重装一遍",
+              );
+            if (bad.length) throw new Error(bad.join("；"));
+            return (
+              "pid " + L.pidFile.pid + " = 本进程；lock 在；" +
+              (L.stamps.build ? "构建 stamp " + String(L.stamps.build.writtenAt).slice(0, 19) : "无构建 stamp")
+            );
+          },
+        },
+        {
+          id: "log-hygiene",
+          name: "日志里扫不到令牌与绝对路径，且只留最近 5 个",
+          cookie: true,
+          help: "扫描在服务端做，只回命中个数，不回日志内容。",
+          run: async function () {
+            var g = ((await envJson()).launcher || {}).logs || {};
+            if (g.tokenHexHits)
+              throw new Error("最近日志里命中 " + g.tokenHexHits + " 个 64 位十六进制串");
+            if (g.absolutePathHits)
+              throw new Error("日志里出现绝对路径 " + g.absolutePathHits + " 处");
+            if (g.count > (g.keptMax || 5))
+              throw new Error("日志文件 " + g.count + " 个，超过保留上限 " + g.keptMax);
+            return g.count + " 个日志文件，令牌/绝对路径命中 0（最新 " + (g.newest || "无") + "）";
+          },
+        },
+        {
+          id: "project-runtime",
+          name: "跑着的服务用的是项目自带 Node",
+          cookie: true,
+          help: "直接 npm run dev 起的话这条本来就不该通过，所以它只报事实、不硬判红。",
+          run: async function () {
+            var j = await envJson();
+            var L = j.launcher || {};
+            if (!j.runtime.usingProjectRuntime) {
+              if (!(L.projectRuntime || {}).installed)
+                return { skip: "还没下载项目专用 Node（首次双击时才会下）" };
+              return {
+                skip: "当前进程用的是系统 Node（npm run dev 场景）；双击启动才走项目自带那份",
+              };
+            }
+            var v = (L.projectRuntime.versions || []).join(",") || "?";
+            if (j.manifest.nodeVersion && v.indexOf(String(j.manifest.nodeVersion).replace(/^v/, "")) < 0)
+              throw new Error("装的 Node 是 " + v + "，清单钉的是 " + j.manifest.nodeVersion);
+            return "项目自带 v" + v + "，与清单一致";
+          },
+        },
+        {
+          id: "tunnel-provenance",
+          name: "隧道组件来源可追（版本、来源、复核项）",
+          cookie: true,
+          run: async function () {
+            var j = await envJson();
+            var L = j.launcher || {};
+            if (!L.tunnel) {
+              if (((j.tunnelProcess || {}).binaryPresent))
+                return { skip: "bin/cloudflared 在，但没有回执文件（手工放二进制的场景）" };
+              return { skip: "没准备 cloudflared：B 走局域网地址，双击流程仍然成立" };
+            }
+            if (!L.tunnel.matchesManifest)
+              throw new Error(
+                "回执版本 " + L.tunnel.version + " 与清单 " +
+                  (j.manifest.cloudflaredVersion || "?") + " 不一致",
+              );
+            if (!(L.tunnel.checksPassed || []).length)
+              throw new Error("回执里没有任何复核记录");
+            return (
+              L.tunnel.version + " · " + L.tunnel.source + " · sha " +
+              L.tunnel.sha256Prefix + "… · 复核 " + L.tunnel.checksPassed.join(" / ")
+            );
+          },
+        },
+        {
+          id: "no-secret",
+          name: "自检响应里没有令牌与密钥",
+          cookie: true,
+          run: async function () {
+            var t = await (await fetch("/api/local/selftest/env")).text();
+            var banned = [
+              "LOCAL_CONTROL_TOKEN_SECRET",
+              "USER_MODEL_API_KEY",
+              "api_key",
+              "sk-",
+            ];
+            var hit = banned.filter(function (w) {
+              return t.indexOf(w) >= 0;
+            });
+            if (hit.length) throw new Error("出现敏感字段名：" + hit.join("、"));
+            if (/bootstrap\/[0-9a-f]{32,}/.test(t))
+              throw new Error("响应里出现了一次性令牌");
+            // 依赖/构建指纹、二进制校验值本身就是 64 位十六进制，那不是秘密；
+            // 但要盯住它们别挂在令牌类的字段名下。
+            var fieldRe = /"([A-Za-z0-9_]+)"\s*:\s*"[0-9a-f]{64}"/g, m;
+            while ((m = fieldRe.exec(t))) {
+              if (/token|secret|key|cookie/i.test(m[1]))
+                throw new Error("字段 " + m[1] + " 的值像令牌");
+            }
+            return "字段名、令牌、密钥都没出现";
+          },
+        },
+      ];
+
+      var state = { env: null, results: {}, cookieOk: null };
+
+      // 自检数据只有一份来源，且要控制会话；把「有没有解锁」这件事集中判一次。
+      async function envJson(force) {
+        if (state.env && !force) return state.env;
+        var r = await fetch("/api/local/selftest/env");
+        if (r.status === 403) {
+          var e = new Error("未建立控制会话");
+          e.noCookie = true;
+          throw e;
+        }
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        state.env = await r.json();
+        return state.env;
+      }
+
+      async function cookieOk() {
+        if (state.cookieOk === null) {
+          state.cookieOk = (await fetch("/api/local/status")).status === 200;
+        }
+        return state.cookieOk;
+      }
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>]/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+        });
+      }
+
+      async function loadEnv() {
+        state.env = null;
+        state.cookieOk = null;
+        var j;
+        try {
+          j = await envJson(true);
+        } catch (e) {
+          el("auth").hidden = false;
+          el("env").innerHTML =
+            "<div class='card'><b>还没建立控制会话</b><span>从启动脚本自动打开的那一次进来就有；" +
+            "已经关掉了就再双击一次启动文件。下面 11 项需要解锁才能跑，未解锁会显示「跳过」而不是失败。</span></div>";
+          return;
+        }
+        el("auth").hidden = true;
+        state.cookieOk = true;
+        var cards = [
+          ["系统", j.runtime.platform + " / " + j.runtime.arch],
+          [
+            "Node 版本",
+            j.runtime.nodeVersion +
+              (j.runtime.usingProjectRuntime
+                ? "（项目专用）"
+                : "（系统 Node）"),
+          ],
+          [
+            "令牌来源",
+            j.runtime.launcherSuppliedToken
+              ? "启动器注入（每次启动新生成）"
+              : "进程内随机",
+          ],
+          ["运行模式", j.runtime.nodeEnv],
+          [
+            "端口",
+            "A " +
+              j.ports.local +
+              " · B " +
+              j.ports.public +
+              "（B 监听 " +
+              j.ports.publicHost +
+              "）",
+          ],
+          ["A 页面", j.paths.aDistExists ? "已构建" : "未构建"],
+          ["B 页面", j.paths.bDistExists ? "已构建" : "未构建"],
+          [
+            "本机数据",
+            j.paths.dataExists ? "已有 sqlite 文件" : "还没建过会话",
+          ],
+          [
+            "环境变量",
+            (j.paths.envExample ? ".env.example 在" : ".env.example 缺") +
+              " · " +
+              (j.paths.envLocal ? "有 .env.local" : "无 .env.local"),
+          ],
+          [
+            "运行时清单",
+            j.manifest.present
+              ? "钉住 " +
+                (j.manifest.nodeVersion || "?") +
+                (j.manifest.targetPinned ? "" : " · 本机平台缺校验值")
+              : "缺失（脚本会拒绝下载）",
+          ],
+          [
+            "通道组件",
+            // 服务端给的字段叫 cloudflaredVersion；这里原先写的是 cloudflareVersion，
+            // 于是不管装没装，这一格永远显示「未准备」——一个永远为假的显示项。
+            j.manifest.cloudflaredVersion
+              ? "cloudflared " + j.manifest.cloudflaredVersion
+              : "未准备",
+          ],
+          [
+            "Skill：增加ai味",
+            j.skills.aiStyle.usable
+              ? j.skills.aiStyle.skillId +
+                " " +
+                (j.skills.aiStyle.skillVersion || "")
+              : j.skills.aiStyle.status +
+                " · " +
+                (j.skills.aiStyle.reason || ""),
+          ],
+          [
+            "Skill：深度思考反推",
+            j.skills.analysis.usable
+              ? j.skills.analysis.skillId +
+                " " +
+                (j.skills.analysis.skillVersion || "")
+              : j.skills.analysis.status +
+                " · " +
+                (j.skills.analysis.reason || ""),
+          ],
+        ];
+        var L = j.launcher || {};
+        if (L.pidFile) {
+          cards.push([
+            "pid 文件",
+            L.pidFile.exists
+              ? "写着 " + L.pidFile.pid +
+                (L.pidFile.pointsAtThisProcess
+                  ? "（就是我）"
+                  : L.pidFile.processAlive
+                    ? "（另有其人 → 可能两份）"
+                    : "（进程已不在 → 残留）")
+              : "没有（不是启动脚本拉起来的）",
+          ]);
+          cards.push(["启动锁", L.lockFileExists ? "start.lock 在" : "没有"]);
+        }
+        if (L.logs)
+          cards.push([
+            "日志",
+            L.logs.count + " 个 · 令牌命中 " + L.logs.tokenHexHits +
+              " · 绝对路径命中 " + L.logs.absolutePathHits,
+          ]);
+        if (L.stamps && L.stamps.deps)
+          cards.push([
+            "依赖 stamp",
+            (L.stamps.deps.nodeVersion || "?") +
+              (L.stamps.deps.matchesThisMachine ? " · 与本机一致" : " · 与本机不符（下次会重装）"),
+          ]);
+        cards.push([
+          "公网入口",
+          (j.publicProbe || {}).reachable
+            ? "B " + j.publicProbe.port + " 活着（" + j.publicProbe.latencyMs + "ms，探针回显" +
+              (j.publicProbe.probeEchoed ? "对" : "不对") +
+              "）"
+            : "B " + ((j.publicProbe || {}).port || "?") + " 探不到",
+        ]);
+        el("env").innerHTML = cards
+          .map(function (c) {
+            return (
+              "<div class='card'><b>" +
+              esc(c[0]) +
+              "</b><span>" +
+              esc(c[1]) +
+              "</span></div>"
+            );
+          })
+          .join("");
+      }
+
+      function renderResults() {
+        el("results").querySelector("tbody").innerHTML = CHECKS.map(
+          function (c) {
+            var r = state.results[c.id];
+            var mark = !r
+              ? "—"
+              : r.ok === null
+                ? '<span class="skip">跳过</span>'
+                : r.ok
+                  ? '<span class="pass">通过</span>'
+                  : '<span class="fail">失败</span>';
+            var note = !r
+              ? '<span class="hint">未运行</span>'
+              : r.ok === null
+                ? '<span class="skip">' + esc(r.note) + "</span>"
+                : r.ok
+                  ? esc(r.note) + (c.help ? '<br><span class="hint">' + esc(c.help).replace(/\n/g, "<br>") + "</span>" : "")
+                  : '<span class="fail">' + esc(r.error) + "</span>";
+            return (
+              "<tr><td>" +
+              mark +
+              "</td><td>" +
+              esc(c.name) +
+              '<br><span class="id">' +
+              c.id +
+              "</span></td><td>" +
+              note +
+              "</td></tr>"
+            );
+          },
+        ).join("");
+        var ids = Object.keys(state.results);
+        var done = ids.length;
+        var skipped = ids.filter(function (k) {
+          return state.results[k].ok === null;
+        }).length;
+        var failed = ids.filter(function (k) {
+          return state.results[k].ok === false;
+        }).length;
+        el("summary").textContent = done
+          ? "跑完 " + done + " / " + CHECKS.length + "：通过 " + (done - skipped - failed) +
+            "，失败 " + failed + "，跳过 " + skipped
+          : "尚未运行";
+      }
+
+      async function runAll() {
+        el("summary").textContent = "跑着看…";
+        var unlocked = await cookieOk();
+        for (var i = 0; i < CHECKS.length; i++) {
+          var c = CHECKS[i];
+          if (c.cookie && !unlocked) {
+            // 「没解锁」既不是通过也不是失败。写成红叉的话，A 会去修一个不存在的问题。
+            state.results[c.id] = { ok: null, note: "未解锁，跳过" };
+            renderResults();
+            continue;
+          }
+          try {
+            var out = await c.run();
+            if (out && typeof out === "object" && out.skip)
+              state.results[c.id] = { ok: null, note: out.skip };
+            else state.results[c.id] = { ok: true, note: String(out) };
+          } catch (e) {
+            if (e && e.noCookie)
+              state.results[c.id] = { ok: null, note: "未解锁，跳过" };
+            else
+              state.results[c.id] = {
+                ok: false,
+                error: String(e && e.message ? e.message : e),
+              };
+          }
+          renderResults();
+        }
+      }
+
+      // 手工清单：勾选与下拉结果存 localStorage，只留在这台机器上
+      var STORE_KEY = "aiwindow.stage5.acceptance";
+      function loadStore() {
+        try {
+          return JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+        } catch (e) {
+          return {};
+        }
+      }
+      function saveStore(s) {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(s));
+        } catch (e) {
+          /* 浏览器不让存就算了 */
+        }
+      }
+      function renderManual() {
+        var store = loadStore();
+        el("manual").innerHTML = MANUAL_ITEMS.map(function (m) {
+          var v = store[m.id] || {};
+          var verdict = v.verdict || "";
+          return (
+            "<li><label><input type='checkbox' data-id='" +
+            m.id +
+            "' " +
+            (v.done ? "checked" : "") +
+            " />" +
+            "<span><b>" +
+            esc(m.text) +
+            "</b><small>" +
+            esc(m.how) +
+            "</small>" +
+            "<select data-verdict='" +
+            m.id +
+            "' style='margin-top:4px'>" +
+            ["", "通过", "不通过", "环境受限，没验"]
+              .map(function (o) {
+                return (
+                  "<option" +
+                  (verdict === o ? " selected" : "") +
+                  ">" +
+                  o +
+                  "</option>"
+                );
+              })
+              .join("") +
+            "</select></span></label></li>"
+          );
+        }).join("");
+        el("manual")
+          .querySelectorAll("input[type=checkbox]")
+          .forEach(function (box) {
+            box.addEventListener("change", function () {
+              var s = loadStore();
+              s[box.dataset.id] = {
+                done: box.checked,
+                verdict: (s[box.dataset.id] || {}).verdict || "",
+                note: (s[box.dataset.id] || {}).note || "",
+              };
+              saveStore(s);
+            });
+          });
+        el("manual")
+          .querySelectorAll("select[data-verdict]")
+          .forEach(function (sel) {
+            sel.addEventListener("change", function () {
+              var s = loadStore();
+              var id = sel.dataset.verdict;
+              s[id] = {
+                done: (s[id] || {}).done || false,
+                verdict: sel.value,
+                note: (s[id] || {}).note || "",
+              };
+              saveStore(s);
+            });
+          });
+      }
+
+      function buildReport() {
+        var store = loadStore();
+        var lines = [];
+        var now = new Date().toISOString();
+        lines.push("# 阶段五验收记录");
+        lines.push("");
+        lines.push("- 记录时间：" + now);
+        if (state.env) {
+          lines.push(
+            "- 运行环境：" +
+              state.env.runtime.platform +
+              "/" +
+              state.env.runtime.arch +
+              "，node " +
+              state.env.runtime.nodeVersion +
+              (state.env.runtime.usingProjectRuntime
+                ? "（项目专用）"
+                : "（系统 Node）") +
+              "，A " +
+              state.env.ports.local +
+              " / B " +
+              state.env.ports.public,
+          );
+          lines.push(
+            "- Skill：" +
+              state.env.skills.aiStyle.skillId +
+              " / " +
+              state.env.skills.analysis.skillId,
+          );
+        }
+        lines.push("");
+        lines.push("## 自动化检查");
+        lines.push("");
+        lines.push("| 结果 | 检查项 | 说明 |");
+        lines.push("| --- | --- | --- |");
+        CHECKS.forEach(function (c) {
+          var r = state.results[c.id];
+          lines.push(
+            "| " +
+              (!r
+                ? "未跑"
+                : r.ok === null
+                  ? "跳过"
+                  : r.ok
+                    ? "通过"
+                    : "失败") +
+              " | " +
+              c.name +
+              " | " +
+              (!r
+                ? ""
+                : r.ok === null
+                  ? String(r.note).replace(/\|/g, "/")
+                  : r.ok
+                    ? String(r.note).replace(/\|/g, "/")
+                    : String(r.error).replace(/\|/g, "/")) +
+              " |",
+          );
+        });
+        lines.push("");
+        lines.push("## 手工清单");
+        lines.push("");
+        lines.push("| 判定 | 勾了 | 条目 | 怎么验 |");
+        lines.push("| --- | --- | --- | --- |");
+        MANUAL_ITEMS.forEach(function (m) {
+          var v = store[m.id] || {};
+          lines.push(
+            "| " +
+              (v.verdict || "") +
+              " | " +
+              (v.done ? "是" : "") +
+              " | " +
+              m.text +
+              " | " +
+              m.how +
+              " |",
+          );
+        });
+        return lines.join("\n");
+      }
+
+      async function postJson(url, body) {
+        var r = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body || {}),
+        });
+        return {
+          status: r.status,
+          body: await r.json().catch(function () {
+            return {};
+          }),
+        };
+      }
+
+      function init() {
+        renderManual();
+        renderResults();
+        loadEnv().then(function () {
+          renderResults();
+        });
+        el("runAll").addEventListener("click", function () {
+          runAll().then(function () {
+            renderResults();
+          });
+        });
+        el("reload").addEventListener("click", loadEnv);
+        el("export").addEventListener("click", function () {
+          var md = buildReport();
+          el("report").hidden = false;
+          el("report").value = md;
+          el("report").select();
+          var copied = false;
+          try {
+            copied = document.execCommand("copy");
+          } catch (e) {
+            copied = false;
+          }
+          el("exportHint").textContent = copied
+            ? "已复制到剪贴板，也可以从下面整段选中"
+            : "已生成，从下面整段复制";
+        });
+        el("resetManual").addEventListener("click", function () {
+          saveStore({});
+          renderManual();
+          el("exportHint").textContent = "勾选已清空";
+        });
+        el("reconnect").addEventListener("click", async function () {
+          el("exportHint").textContent = "重连中…";
+          var r = await postJson("/api/local/tunnel/reconnect", {
+            confirm: true,
+          });
+          el("exportHint").textContent =
+            "重连返回 HTTP " +
+            r.status +
+            (r.body && r.body.error ? "（" + r.body.error + "）" : "");
+        });
+        el("shutdown").addEventListener("click", async function () {
+          if (
+            !confirm(
+              "确定停止本机服务？所有工作会话会被结束，公网链接立即失效，且下次启动不会恢复。",
+            )
+          )
+            return;
+          el("exportHint").textContent = "正在停止…";
+          await postJson("/api/local/shutdown", {});
+          el("exportHint").textContent = "已请求停止；启动窗口会随之退出";
+        });
+      }
+      init();
+    </script>
+  </body>
+</html>

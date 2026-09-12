@@ -1,0 +1,4 @@
+interface:
+  display_name: "深度思考反推"
+  short_description: "从答案反推出可展示的分析过程"
+  default_prompt: "Use $reverse-depth-analysis 根据对方的提问和这段已经确定的回答，反向推出一条可展示的分析过程：默认标准档，3 步以内，纯文本，不使用 Markdown 符号，不新增回答里没有的事实、数据、来源或工具调用，立场和数字必须与回答完全一致。"
