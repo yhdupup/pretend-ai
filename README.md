@@ -64,3 +64,7 @@ npm run dev            # 开发模式
 
 历史实验脚本在 `docs/dev-archive/`。
 `check:skin` 没并进 `check`：它要本机 Chromium 与真浏览器，属于验收那一次而不是每次提交。
+
+## 许可
+
+本项目源码公开，仅限非商业用途。商业使用、商业集成、收费服务及其他带有预期商业应用的使用均未获授权；完整条款见 [PolyForm Noncommercial License 1.0.0](LICENSE)。
